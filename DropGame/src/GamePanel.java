@@ -18,7 +18,7 @@ public class GamePanel extends JPanel implements Runnable {
 	static final int BALL_DIAM = 25;
 
 	Thread gameThread;
-    Ball ball;
+    Ball[] balls;
     Collector collector;
 	Score score;
     Image image;
@@ -28,8 +28,9 @@ public class GamePanel extends JPanel implements Runnable {
 	boolean running = true;
 
 	GamePanel() {
-        
-		newBall();
+		random = new Random();
+		balls=new Ball[2];
+		newBalls();
 		newCollector();
 		score = new Score(350, 50);
 		background = new ImageIcon("wall1.jpg").getImage();
@@ -41,12 +42,16 @@ public class GamePanel extends JPanel implements Runnable {
 		gameThread = new Thread(this);
 		gameThread.start();
 	}
-	public void newBall() {
+	public void newBalls() {
 		random = new Random();
 		int randomBallWidth = random.nextInt(GAME_WIDTH - BALL_DIAM);
+		int randomBallWidth1 = random.nextInt(GAME_WIDTH - BALL_DIAM);
 		if (randomBallWidth >= GAME_WIDTH - BALL_DIAM / 2) 
 			randomBallWidth = randomBallWidth - BALL_DIAM;
-		ball = new Ball(randomBallWidth, 0, BALL_DIAM);
+		if (randomBallWidth1 >= GAME_WIDTH - BALL_DIAM / 2) 
+			randomBallWidth1 = randomBallWidth1 - BALL_DIAM;
+		balls[0] = new Ball(randomBallWidth, 0, BALL_DIAM);
+		balls[1] = new Ball(randomBallWidth1, -250, BALL_DIAM);
 	}
 	public void newCollector() {
 		collector = new Collector((GAME_WIDTH / 2), GAME_HEIGHT - COLLECTOR_HEIGHT, COLLECTOR_WIDTH, COLLECTOR_HEIGHT);
@@ -61,7 +66,8 @@ public class GamePanel extends JPanel implements Runnable {
 		if (running) {
 			g.drawImage(background, 0, 0, null);
 			collector.draw(g);
-			ball.draw(g);
+			balls[0].draw(g);
+			balls[1].draw(g);
 			score.draw(g);
 		} else {
 			g.drawImage(background, 0, 0, null);
@@ -73,23 +79,30 @@ public class GamePanel extends JPanel implements Runnable {
 	}
 	public void move() {
 		collector.move();
-		ball.move();
+		balls[0].move();
+		balls[1].move();
 	}
 	public void checkCollision() {
-		if (ball.y >= GAME_HEIGHT - ball.height) 
+		if (balls[0].y >= GAME_HEIGHT - balls[0].height) 
 			running = false;
+		if (balls[1].y >= GAME_HEIGHT - balls[1].height) 
+			running = false;
+		for(Ball ball:balls) {
        	if (ball.intersects(collector)) {
 			score.currentScore++;
-			if (score.currentScore % 5 == 0)
-				ball.ySpeed++;
-			random = new Random();
-			int randomBallWidth = random.nextInt(GAME_WIDTH);
-			int randomBallImage = random.nextInt(3);
-			if (randomBallWidth >= GAME_WIDTH - BALL_DIAM / 2)
-				randomBallWidth = randomBallWidth - BALL_DIAM;
-			ball.y = 0;
-			ball.x = randomBallWidth;
-			ball.randomBallImage = randomBallImage;
+       	    int randomBallWidth = random.nextInt(GAME_WIDTH);
+		    int randomBallImage = random.nextInt(3);
+		    if (randomBallWidth >= GAME_WIDTH - BALL_DIAM / 2)
+			randomBallWidth = randomBallWidth - BALL_DIAM;
+		    ball.y = 0;
+		    ball.x = randomBallWidth;
+		    ball.randomBallImage = randomBallImage;
+       	
+		if (score.currentScore % 10 == 0) {
+			balls[0].ySpeed++;	
+			balls[1].ySpeed++;
+		}
+       	}
 		}
 		if (collector.x <= 0)
 			collector.x = 0;
